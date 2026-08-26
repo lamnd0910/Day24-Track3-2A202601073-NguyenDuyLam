@@ -1,7 +1,7 @@
 # CI/CD Blueprint: RAG Eval + Guardrail Stack
 
-**Sinh viên:** [Họ Tên]  
-**Ngày:** [Ngày làm lab]
+**Sinh viên:** Nguyễn Duy Lâm  
+**Ngày:** 2026-08-26
 
 ---
 
@@ -37,14 +37,14 @@ User Response
 
 | Layer | P50 (ms) | P95 (ms) | P99 (ms) | Budget |
 |---|---|---|---|---|
-| Presidio PII | ? | ? | ? | <10ms |
-| NeMo Input Rail | ? | ? | ? | <300ms |
-| RAG Pipeline | ? | ? | ? | <2000ms |
-| NeMo Output Rail | ? | ? | ? | <300ms |
-| **Total Guard** | ? | **?** | ? | **<500ms** |
+| Presidio PII | 840.02 | 1432.73 | 1432.73 | <10ms |
+| NeMo Input Rail | 111.24 | 166.18 | 166.18 | <300ms |
+| RAG Pipeline | Không đo | Không đo | Không đo | <2000ms |
+| NeMo Output Rail | Không đo | Không đo | Không đo | <300ms |
+| **Total Guard** | 969.88 | **1541.41** | 1541.41 | **<500ms** |
 
-**Budget OK?** [ ] Yes / [ ] No  
-**Comment:** [Nếu vượt budget, layer nào là bottleneck và cách tối ưu?]
+**Budget OK?** [x] No  
+**Comment:** Tổng P95 Guard là 1541ms, vượt xa budget <500ms. Nút thắt (bottleneck) khổng lồ nằm ở bước quét bằng mô hình Presidio Analyzer dài ~1433ms. Để tối ưu: Có thể gỡ nlp_engine mặc định của Presidio hoặc chạy ở chế độ Regex (PatternRecognizer) duy nhất để đảm bảo PII scan tốn <10ms theo đúng thiết kế local. NeMo Rail đáp ứng rất tốt (<200ms).
 
 ---
 
@@ -84,16 +84,18 @@ User Response
 
 | | Kết quả |
 |---|---|
-| RAGAS avg_score (50q) | ? |
-| Worst metric | ? |
-| Dominant failure distribution | ? |
-| Cohen's κ | ? |
-| Adversarial pass rate | ? / 20 |
-| Guard P95 latency | ? ms |
+| RAGAS avg_score (50q) | ~0.792 (trung bình 3 class) |
+| Worst metric | faithfulness |
+| Dominant failure distribution | factual |
+| Cohen's κ | 0.000 (poor) |
+| Adversarial pass rate | 18 / 20 |
+| Guard P95 latency | 1541.41 ms |
 
 ---
 
 ## Nhận xét & Cải tiến
 
-> [Viết 3-5 câu về: điều gì hoạt động tốt, điều gì cần cải thiện,
->  nếu deploy production thực sự bạn sẽ thay đổi gì trong stack này?]
+> - **Hoạt động hiệu quả**: NeMo Guardrails đạt tỷ lệ chặn cực cao 18/20 trước các thủ thuật Prompt Injection/Jailbreak/Off-topic phức tạp, thời gian phản hồi API LLM nhanh (<200ms).
+> - **Cần tối ưu LLM Judge**: Đánh giá Pairwise trực tiếp vào Ground Truth còn thấp (Kappa=0.0). Cần đổi prompt cấu trúc với Few-Shot và COT để tránh việc LLM chấp nhận đồng loạt mọi đáp án.
+> - **Khắc phục Latency PII**: Quá trình duyệt ngôn ngữ của Presidio đang kéo chậm cả pipeline. Trong môi trường production thực sự cần tháo các model Spacy/NER nặng ra khỏi config và cho Presidio PII Analyzer thuần sử dụng regex.
+> - **RAGAS Faithfulness**: Pipeline khá tốt về Context retrieval nhưng bị điểm yếu về độ trung thực khi LLM ảo giác trộn các version policy với nhau, do đó cần fix lại system prompt của main RAG loop dặn LLM giữ sát ngữ cảnh.
