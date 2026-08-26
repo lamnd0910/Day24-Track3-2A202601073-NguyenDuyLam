@@ -1,0 +1,27 @@
+{
+  "kappa": 0.0,
+  "bias": {
+    "total_judged": 3,
+    "position_bias_rate": 0.667,
+    "position_bias_count": 2,
+    "verbosity_bias": 1.0,
+    "verbosity_details": {
+      "a_wins_a_longer": 1,
+      "b_wins_b_longer": 0,
+      "total_decisive": 1
+    },
+    "interpretation": "Position bias cao — nên dùng swap-and-average."
+  },
+  "judge_labels": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ]
+}
